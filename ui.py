@@ -11,7 +11,7 @@ from checker import ExcelChecker
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("莱州农商银行数据校验工具V3.0T      @FanYuP ")
+        self.setWindowTitle("莱州农商银行数据校验工具V1.0.4T      @FanYuP ")
         self.setGeometry(100, 100, 1000, 700)
         # 设置窗口图标
         self.setWindowIcon(QIcon('app_icon.ico'))
@@ -221,6 +221,7 @@ class MainWindow(QMainWindow):
         self.option9 = QRadioButton("9.逾期贷款核对3(S67和G01)")
         self.option10 = QRadioButton("10.房贷余额占比核对1(S67和G01)")
         self.option11 = QRadioButton("11.房贷余额占比核对2(S67和G01)")
+        self.option14 = QRadioButton("12.不良贷款率波动核对(G01现期与基期)")
 
         # 添加到按钮组
         self.option_group.addButton(self.option1, 1)
@@ -234,8 +235,9 @@ class MainWindow(QMainWindow):
         self.option_group.addButton(self.option9, 9)
         self.option_group.addButton(self.option10, 10)
         self.option_group.addButton(self.option11, 11)
+        self.option_group.addButton(self.option14, 14)
 
-        # 添加到网格布局 (按照用户要求的三列布局: 第一列为1-4号，第二列为5-8，第三列为9-11号功能)
+        # 添加到网格布局 (按照用户要求的三列布局: 第一列为1-4号，第二列为5-8，第三列为9-11和14号功能)
         self.options_layout.addWidget(self.option1, 0, 0)
         self.options_layout.addWidget(self.option2, 1, 0)
         self.options_layout.addWidget(self.option3, 2, 0)
@@ -247,6 +249,7 @@ class MainWindow(QMainWindow):
         self.options_layout.addWidget(self.option9, 0, 2)
         self.options_layout.addWidget(self.option10, 1, 2)
         self.options_layout.addWidget(self.option11, 2, 2)
+        self.options_layout.addWidget(self.option14, 3, 2)
 
         # 添加执行按钮
         self.execute_btn = QPushButton("执行校验")
@@ -560,7 +563,7 @@ class MainWindow(QMainWindow):
         self.four_option_group = QButtonGroup()
 
         # 创建单选按钮
-        self.four_option1 = QRadioButton("1.利率异常校验(G01和G04)")
+        self.four_option1 = QRadioButton("1.业务关联校验(G01和G04)")
         self.four_option2 = QRadioButton("2.贷款拨备覆盖率校验(G01和G04A)")
 
         # 添加到按钮组
@@ -686,6 +689,8 @@ class MainWindow(QMainWindow):
 <li>逾期贷款核对3(S67和G01)：S6701融资风险监测表中逾期90天数以上贷款与G0102逾期贷款核对</li>
 <li>房贷余额占比核对1(S67和G01)：S6701融资风险监测表中房地产贷款合计除以G01中各项贷款小于百分之二十</li>
 <li>房贷余额占比核对2(S67和G01)：S6701融资风险监测表中个人住房贷款除以G01中各项贷款小于百分之十五</li>
+<li>不良贷款率波动核对(G01现期与基期)： G0102表中不良贷款率即不良贷款/各项贷款占比小于等于百分之五同时G0102表中不良贷款率减中G0102表基期中不良贷款率大于百分之一，校验结果为异常</li>
+
 </ol>
 
 <h2>单表校验规则</h2>
@@ -698,8 +703,20 @@ class MainWindow(QMainWindow):
 
 <h2>多表校验规则</h2>
 <ol>
-<li>利率异常校验：G01中各项贷款余额增长大于百分之二十同时G04中贷款利息收入增长大于百分之五，校验结果异常</li>
+<li>业务关联校验：G01中各项贷款余额增长大于百分之二十同时G04中贷款利息收入增长小于百分之五，校验结果异常</li>
 <li>贷款拨备覆盖率校验：G01中不良贷款余额增长同时1.1实际计提的贷款损失准备余额除以2.1不良贷款余额的得到的贷款拨备覆盖率提升，校验结果异常</li>
+
+</ol>
+
+<h2>程序使用注意事项</h2>
+<ol>
+<li>本程序仅支持校验Excel文件，格式为.xlsx，不支持校验其他格式文件。</li>
+<li>本程序仅供个人学习测试使用，不涉及任何商业用途，不建议在生产环境中使用。</li>
+<li>本程序不提供任何担保，不承担任何责任。</li>
+<li>本程序的使用风险由用户自行承担。</li>
+<li>用户在使用本程序前，应确保已备份好原始数据，避免因程序运行导致数据丢失。</li>
+<li>用户在使用本程序时，应注意保护个人隐私，避免泄露个人敏感信息。</li>
+<li>用户在使用本程序时，应遵守相关法律法规，避免因程序运行导致的法律问题。</li>
 </ol>"""
 
         self.rules_text.setHtml(rules_content)

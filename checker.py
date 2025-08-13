@@ -42,7 +42,9 @@ class ExcelChecker:
                 results = self.check_overdue_90_days(ws1, ws2)  # 逾期贷款(90天以上)核对
             elif option_id == 5:
                 results = self.check_overdue_days(ws1, ws2)  # 各逾期天数贷款核对(S6301和S7101)
-            elif option_id == 7:
+            elif option_id == 14:
+                results = self.check_non_performing_loan_ratio(ws1, ws2)  # 不良贷款率波动核对(G01现期与基期)
+            elif option_id == 6:
                 results = self.check_housing_loan_balance(ws1, ws2)
             elif option_id == 8:
                 results = self.check_overdue_loan_1(ws1, ws2)
@@ -85,9 +87,9 @@ class ExcelChecker:
             return [('错误', str(e), '', '', False)]
 
     def check_interest_rate_abnormal(self, ws1, ws2, ws3, ws4):
-        """利率异常校验：
+        """业务关联校验：
         校验表1中C6的数据-表2中C6的数据的差除以表2中C6的数据大于20%，
-        同时表3中C9的数据-表4中C9的数据差除以表4中C9的数据大于5%，
+        同时表3中C9的数据-表4中C9的数据差除以表4中C9的数据小于5%，
         此时校验结果为异常
         """
         results = []
@@ -104,14 +106,16 @@ class ExcelChecker:
 
         # 判断条件是否满足
         is_c6_condition_met = diff_ratio_c6 > 20
-        is_c9_condition_met = diff_ratio_c9 > 5
+        is_c9_condition_met = diff_ratio_c9 < 5
+
         is_abnormal = is_c6_condition_met and is_c9_condition_met
         status = not is_abnormal  # 校验通过为True，异常为False
 
         # 添加结果
-        results.append(('表1 C6 - 表2 C6 差值占比', f'{diff_ratio_c6:.2f}%', '>20%', f'{is_c6_condition_met}', True))
-        results.append(('表3 C9 - 表4 C9 差值占比', f'{diff_ratio_c9:.2f}%', '>5%', f'{is_c9_condition_met}', True))
-        results.append(('利率异常校验结果', '', '', f'{is_abnormal}', status))
+        results.append(('表1 C6 - 表2 C6 差值占比', f'{diff_ratio_c6:.2f}%', '>20%', f'{is_c6_condition_met}', False))
+        results.append(('表3 C9 - 表4 C9 差值占比', f'{diff_ratio_c9:.2f}%', '<5%', f'{is_c9_condition_met}', False))
+
+        results.append(('业务关联校验结果', '', '', f'{is_abnormal}', status))
 
         return results
 
@@ -187,6 +191,36 @@ class ExcelChecker:
         return [
             ("逾期贷款(90天以上)核对", c16_val, sum_c27_g30, c16_val >= sum_c27_g30)
         ]
+
+    def check_non_performing_loan_ratio(self, ws1, ws2):
+        """不良贷款率波动核对(G01现期与基期):
+        校验表1中C10的数据/C6的数据小于等于百分之五同时表1中C10的数据/C6的数据减表2中C10的数据/C6的数据大于百分之一，校验结果为异常
+        """
+        results = []
+
+        # 获取单元格值
+        c10_ws1 = self.get_cell_value(ws1, 'C10')
+        c6_ws1 = self.get_cell_value(ws1, 'C6')
+        c10_ws2 = self.get_cell_value(ws2, 'C10')
+        c6_ws2 = self.get_cell_value(ws2, 'C6')
+
+        # 计算比率（避免除以零错误）
+        ratio_ws1 = (c10_ws1 / c6_ws1) * 100 if c6_ws1 != 0 else 0
+        ratio_ws2 = (c10_ws2 / c6_ws2) * 100 if c6_ws2 != 0 else 0
+        ratio_diff = ratio_ws1 - ratio_ws2
+
+        # 判断条件是否满足
+        is_condition1_met = ratio_ws1 <= 5
+        is_condition2_met = ratio_diff > 1
+        is_abnormal = is_condition1_met and is_condition2_met
+        status = not is_abnormal  # 校验通过为True，异常为False
+
+        # 添加结果
+        results.append(('表1 C10/C6 比率', f'{ratio_ws1:.2f}%', '<=5%', ratio_ws1 <= 5))
+        results.append(('表1比率 - 表2比率', f'{ratio_diff:.2f}%', '>1%', not (ratio_diff > 1)))
+        results.append(('不良贷款率波动校验结果', '', '', status))
+
+        return results
 
     def check_overdue_days(self, ws1, ws2):
         """各逾期天数贷款核对"""
